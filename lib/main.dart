@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      navigatorKey: navigatorKey, // Ensure navigatorKey is set
+      navigatorKey: navigatorKey, 
       home: const GameScreen(),
     );
   }
@@ -104,21 +104,43 @@ class CardWidget extends StatelessWidget {
       onTap: () {
         gameState.flipCard(index);
       },
-      child: AnimatedContainer(
+      child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
-        decoration: BoxDecoration(
-          color: card.isMatched ? Colors.green : Colors.blue,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Center(
-          child: card.isFaceUp || card.isMatched
-              ? Text(card.value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white))
-              : const Text('?', style: TextStyle(fontSize: 32, color: Colors.white)),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          final rotateAnimation = Tween(begin: 0.0, end: 1.0).animate(animation);
+          return AnimatedBuilder(
+            animation: rotateAnimation,
+            child: child,
+            builder: (context, child) {
+              return Transform(
+                transform: Matrix4.rotationY(rotateAnimation.value * 3.14159),
+                alignment: Alignment.center,
+                child: child,
+              );
+            },
+          );
+        },
+        child: Container(
+          key: ValueKey<int>(card.isFaceUp ? 1 : 0),
+          decoration: BoxDecoration(
+            color: card.isMatched ? Colors.green : Colors.blue,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: card.isFaceUp || card.isMatched
+                ? Text(card.value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white))
+                : Transform(
+                    transform: Matrix4.rotationY(3.14159), // Flip the "?" to face the correct way when card is not face-up
+                    alignment: Alignment.center,
+                    child: const Text('?', style: TextStyle(fontSize: 32, color: Colors.white)),
+                  ),
+          ),
         ),
       ),
     );
   }
 }
+
 
 class CardModel {
   final String value;
