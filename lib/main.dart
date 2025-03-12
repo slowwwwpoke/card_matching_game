@@ -168,22 +168,23 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void flipCard(int index) {
-    if (cards[index].isFaceUp || cards[index].isMatched) return;
+void flipCard(int index) {
+  if (cards[index].isFaceUp || cards[index].isMatched) return;
 
+  if (firstCard == null) {
+    firstCard = cards[index];
     cards[index].isFaceUp = true;
-
-    if (firstCard == null) {
-      firstCard = cards[index];
-    } else if (secondCard == null) {
-      secondCard = cards[index];
-      Future.delayed(const Duration(milliseconds: 500), () {
-        checkMatch();
-      });
-    }
-
-    notifyListeners();
+  } else if (secondCard == null) {
+    secondCard = cards[index];
+    cards[index].isFaceUp = true;
+    Future.delayed(const Duration(milliseconds: 800), () {
+      checkMatch();
+    });
   }
+
+  notifyListeners();
+}
+
 
   void checkMatch() {
     if (firstCard != null && secondCard != null) {
