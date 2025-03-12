@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      navigatorKey: navigatorKey, // Ensure navigatorKey is set
       home: const GameScreen(),
     );
   }
@@ -37,7 +38,9 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<GameState>(context, listen: false).initializeGame();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<GameState>(context, listen: false).initializeGame();
+    });
   }
 
   @override
@@ -72,9 +75,9 @@ class _GameScreenState extends State<GameScreen> {
             child: GridView.builder(
               padding: const EdgeInsets.all(16.0),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4, // 4x4 grid
-                crossAxisSpacing: 8.0,
-                mainAxisSpacing: 8.0,
+                crossAxisCount: 4,
+                crossAxisSpacing: 4.0,
+                mainAxisSpacing: 4.0,
               ),
               itemCount: gameState.cards.length,
               itemBuilder: (context, index) {
@@ -152,7 +155,9 @@ class GameState extends ChangeNotifier {
       firstCard = cards[index];
     } else if (secondCard == null) {
       secondCard = cards[index];
-      checkMatch();
+      Future.delayed(const Duration(milliseconds: 500), () {
+        checkMatch();
+      });
     }
 
     notifyListeners();
@@ -165,16 +170,15 @@ class GameState extends ChangeNotifier {
         secondCard!.isMatched = true;
         score += 10;
       } else {
-          firstCard!.isFaceUp = false;
-          secondCard!.isFaceUp = false;
-          notifyListeners();
+        firstCard!.isFaceUp = false;
+        secondCard!.isFaceUp = false;
         score -= 5;
       }
       firstCard = null;
       secondCard = null;
     }
-    checkWinCondition();
     notifyListeners();
+    checkWinCondition();
   }
 
   void checkWinCondition() {
@@ -187,22 +191,27 @@ class GameState extends ChangeNotifier {
   }
 
   void showWinDialog() {
-    showDialog(
-      context: navigatorKey.currentContext!,
-      builder: (context) => AlertDialog(
-        title: const Text('Congratulations!'),
-        content: Text('You matched all pairs in $seconds seconds! Your score: $score'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              restartGame();
-            },
-            child: const Text('Play Again'),
-          ),
-        ],
-      ),
-    );
+    if (navigatorKey.currentContext != null) {
+      showDialog(
+        context: navigatorKey.currentContext!,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Congratulations!'),
+            content: Text('You matched all pairs in $seconds seconds! Your score: $score'),
+            actions: [
+              TextButton(
+                child: const Text('Restart'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  restartGame();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   void startTimer() {
